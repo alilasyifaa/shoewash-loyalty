@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kartu Loyalty - ShoeWash</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #0c0c0c; color: #f0ede6; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .card { background: #161616; border: 1px solid #2a2a2a; border-radius: 20px; padding: 2rem; width: 100%; max-width: 360px; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 1.75rem; }
+    .brand-icon { width: 42px; height: 42px; background: #0d2018; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 1px solid #2d6a4f; }
+    .brand-name { font-size: 1rem; font-weight: 500; letter-spacing: 0.05em; }
+    .brand-sub { font-size: 0.72rem; color: #888; }
+    .customer-section { margin-bottom: 1.5rem; }
+    .label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: #666; margin-bottom: 4px; }
+    .customer-name { font-size: 1.25rem; font-weight: 500; }
+    .customer-since { font-size: 0.78rem; color: #888; margin-top: 2px; }
+    .divider { border: none; border-top: 1px solid #1e1e1e; margin: 1.25rem 0; }
+    .stamps-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: #666; margin-bottom: 0.75rem; }
+    .stamp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1rem; }
+    .stamp { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #2a2a2a; background: #1e1e1e; font-size: 0.9rem; }
+    .stamp.filled { background: #2d6a4f; border-color: #2d6a4f; }
+    .stamp.filled::after { content: '✓'; color: #74c69d; font-size: 1rem; font-weight: 500; }
+    .progress-text { font-size: 0.82rem; color: #888; margin-bottom: 0.5rem; }
+    .progress-text strong { color: #74c69d; }
+    .progress-bar-wrap { background: #1e1e1e; border-radius: 20px; height: 4px; margin-bottom: 1.25rem; overflow: hidden; }
+    .progress-bar { height: 100%; background: #2d6a4f; border-radius: 20px; transition: width 0.5s ease; }
+    .reward-box { background: #0d2018; border: 1px solid #2d6a4f; border-radius: 12px; padding: 1rem; display: flex; align-items: center; gap: 10px; }
+    .reward-icon { font-size: 1.3rem; }
+    .reward-text { font-size: 0.82rem; color: #74c69d; line-height: 1.5; }
+    .free-reward { background: #1a3a2a; border: 1px solid #74c69d; border-radius: 12px; padding: 1.25rem; text-align: center; }
+    .free-reward .big { font-size: 2rem; margin-bottom: 0.5rem; }
+    .free-reward h3 { font-size: 1rem; font-weight: 500; color: #74c69d; margin-bottom: 0.25rem; }
+    .free-reward p { font-size: 0.8rem; color: #888; }
+    .stat-row { display: flex; gap: 8px; margin-bottom: 1.25rem; }
+    .stat-pill { flex: 1; background: #1e1e1e; border-radius: 8px; padding: 0.6rem 0.75rem; text-align: center; }
+    .stat-pill .val { font-family: 'DM Mono', monospace; font-size: 1.1rem; color: #74c69d; font-weight: 500; }
+    .stat-pill .lbl { font-size: 0.68rem; color: #666; margin-top: 2px; }
+    .not-found { text-align: center; padding: 2rem; color: #888; }
+    .not-found .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .loading { text-align: center; padding: 2rem; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card-content">
+    <div class="loading">Memuat kartu loyalty kamu...</div>
+  </div>
+  <script>
+    const SUPABASE_URL = 'https://zkvmpsuqikqpixriptfw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_XNJJ-JWPvH9ZxrqnKkXYuQ_JSH9Nj_k';
+    function api(path) {
+      return fetch(SUPABASE_URL+'/rest/v1/'+path, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY }
+      }).then(r=>r.json());
+    }
+    function formatDate(str) {
+      return new Date(str).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    }
+    async function loadCard() {
+      const id = new URLSearchParams(window.location.search).get('id');
+      if (!id) { renderNotFound('Link tidak valid'); return; }
+      const data = await api(`customers?id=eq.${id}&select=*,stamps(*)`);
+      if (!data.length) { renderNotFound('Customer tidak ditemukan'); return; }
+      const c = data[0];
+      const s = c.stamps&&c.stamps[0] ? c.stamps[0] : {count:0,redeemed:0};
+      const count = s.count||0, redeemed = s.redeemed||0;
+      const pct = Math.min((count/10)*100,100);
+      let stampsHtml = '';
+      for(let i=0;i<10;i++) stampsHtml+=`<div class="stamp ${i<count?'filled':''}"></div>`;
+      const rewardSection = count>=10 ? `
+        <div class="free-reward">
+          <div class="big">🎉</div>
+          <h3>Selamat! Kamu dapat gratis 1x cuci!</h3>
+          <p>Tunjukkan halaman ini ke ShoeWash untuk klaim hadiah kamu.</p>
+        </div>` : `
+        <div class="reward-box">
+          <div class="reward-icon">⭐</div>
+          <div class="reward-text">Kumpulkan <strong style="color:#f0ede6">${10-count} stempel lagi</strong> untuk dapat<br><strong style="color:#f0ede6">1x cuci sepatu GRATIS!</strong></div>
+        </div>`;
+      document.getElementById('card-content').innerHTML = `
+        <div class="brand">
+          <div class="brand-icon">👟</div>
+          <div><div class="brand-name">SHOEWASH</div><div class="brand-sub">Loyalty Card</div></div>
+        </div>
+        <div class="customer-section">
+          <div class="label">Nama</div>
+          <div class="customer-name">${c.name}</div>
+          <div class="customer-since">Member sejak ${formatDate(c.created_at)}</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-pill"><div class="val">${count}</div><div class="lbl">Stempel sekarang</div></div>
+          <div class="stat-pill"><div class="val">${redeemed}</div><div class="lbl">Gratis sudah dipakai</div></div>
+        </div>
+        <hr class="divider">
+        <div class="stamps-label">Stempel Kamu</div>
+        <div class="stamp-grid">${stampsHtml}</div>
+        <div class="progress-text"><strong>${count}/10</strong> stempel terkumpul</div>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+        ${rewardSection}`;
+    }
+    function renderNotFound(msg) {
+      document.getElementById('card-content').innerHTML=`<div class="not-found"><div class="icon">🔍</div><p>${msg}</p><p style="margin-top:8px;font-size:0.8rem">Hubungi ShoeWash untuk bantuan.</p></div>`;
+    }
+    loadCard();
+  </script>
+</body>
+</html>
