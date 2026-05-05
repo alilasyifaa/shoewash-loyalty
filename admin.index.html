@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - ShoeWash Loyalty</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0c0c0c; --surface: #161616; --surface2: #1e1e1e;
+      --border: #2a2a2a; --green: #2d6a4f; --green-light: #74c69d;
+      --green-bg: #0d2018; --text: #f0ede6; --muted: #888; --danger: #c0392b;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .login-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; width: 320px; text-align: center; }
+    .login-box .logo { font-size: 2.5rem; margin-bottom: 1rem; }
+    .login-box h2 { font-size: 1.1rem; font-weight: 400; margin-bottom: 0.3rem; }
+    .login-box p { font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+    input[type=password], input[type=text], input[type=tel] { width: 100%; padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.9rem; font-family: 'DM Mono', monospace; margin-bottom: 10px; outline: none; transition: border-color 0.2s; }
+    input:focus { border-color: var(--green); }
+    button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--green); color: #d8f3dc; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s; letter-spacing: 0.03em; }
+    button:hover { opacity: 0.85; } button:active { transform: scale(0.98); }
+    .btn-small { width: auto; padding: 8px 16px; font-size: 0.8rem; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); width: auto; padding: 8px 14px; font-size: 0.8rem; }
+    .btn-outline:hover { border-color: var(--green); color: var(--green-light); opacity: 1; }
+    .error { color: #e74c3c; font-size: 0.8rem; margin-top: 8px; }
+    #app { display: none; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-left span:first-child { font-size: 1.3rem; }
+    .header-title { font-size: 1rem; font-weight: 500; }
+    .header-sub { font-size: 0.75rem; color: var(--muted); }
+    .logout-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; font-size: 0.75rem; width: auto; border-radius: 6px; }
+    main { max-width: 720px; margin: 0 auto; padding: 1.5rem; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; }
+    .stat-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat-value { font-size: 1.6rem; font-weight: 500; font-family: 'DM Mono', monospace; color: var(--green-light); }
+    .section { margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; }
+    .add-form { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row input { margin-bottom: 0; }
+    .form-row button { width: auto; padding: 12px 20px; white-space: nowrap; }
+    .customer-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.25rem; margin-bottom: 10px; }
+    .customer-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .customer-info h3 { font-size: 0.95rem; font-weight: 500; }
+    .customer-info p { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+    .customer-actions { display: flex; gap: 8px; align-items: center; }
+    .stamp-row { display: flex; align-items: center; gap: 10px; }
+    .stamps { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
+    .stamp { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 1px solid var(--border); background: var(--surface2); }
+    .stamp.filled { background: var(--green); border-color: var(--green); }
+    .stamp-count { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+    .card-link { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 10px; background: var(--surface2); border-radius: 8px; }
+    .card-link a { font-size: 0.75rem; color: var(--green-light); text-decoration: none; font-family: 'DM Mono', monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .copy-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; font-size: 0.72rem; width: auto; border-radius: 6px; }
+    .free-badge { background: #1a3a2a; color: var(--green-light); font-size: 0.72rem; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--green); }
+    .redeem-btn { background: #1a3a2a; color: var(--green-light); border: 1px solid var(--green); padding: 6px 14px; font-size: 0.78rem; width: auto; border-radius: 6px; }
+    .empty { text-align: center; padding: 3rem; color: var(--muted); font-size: 0.9rem; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--green); color: #d8f3dc; padding: 10px 20px; border-radius: 8px; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
+    .toast.show { opacity: 1; }
+    .loading { text-align: center; padding: 2rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">👟</div>
+    <h2>ShoeWash Admin</h2>
+    <p>Masuk untuk kelola loyalty card</p>
+    <input type="password" id="pwd-input" placeholder="Password admin" onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">Masuk</button>
+    <div class="error" id="login-error"></div>
+  </div>
+</div>
+<div id="app">
+  <header>
+    <div class="header-left">
+      <span>👟</span>
+      <div><div class="header-title">ShoeWash Admin</div><div class="header-sub">Panel Loyalty Card</div></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Keluar</button>
+  </header>
+  <main>
+    <div class="stats">
+      <div class="stat-card"><div class="stat-label">Total Customer</div><div class="stat-value" id="stat-total">0</div></div>
+      <div class="stat-card"><div class="stat-label">Total Stempel</div><div class="stat-value" id="stat-stamps">0</div></div>
+      <div class="stat-card"><div class="stat-label">Gratis Digunakan</div><div class="stat-value" id="stat-redeemed">0</div></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Tambah Customer Baru</div>
+      <div class="add-form">
+        <div class="form-row">
+          <input type="text" id="new-name" placeholder="Nama customer">
+          <input type="tel" id="new-phone" placeholder="No. HP (08123456789)">
+          <button onclick="addCustomer()">Tambah</button>
+        </div>
+        <div class="error" id="add-error"></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Daftar Customer</div>
+      <div id="customer-list"><div class="loading">Memuat data...</div></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+  const SUPABASE_URL = 'https://zkvmpsuqikqpixriptfw.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_XNJJ-JWPvH9ZxrqnKkXYuQ_JSH9Nj_k';
+  const ADMIN_PASSWORD = 'shoewash2024';
+  const BASE_URL = window.location.origin;
+  function api(path, method='GET', body=null) {
+    const opts = { method, headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': method==='POST'?'return=representation':'' } };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(SUPABASE_URL+'/rest/v1/'+path, opts).then(r=>r.json());
+  }
+  function login() {
+    if (document.getElementById('pwd-input').value === ADMIN_PASSWORD) {
+      sessionStorage.setItem('sw_admin','1');
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app').style.display='block';
+      loadData();
+    } else { document.getElementById('login-error').textContent='Password salah'; }
+  }
+  function logout() { sessionStorage.removeItem('sw_admin'); location.reload(); }
+  if (sessionStorage.getItem('sw_admin')) { document.getElementById('login-screen').style.display='none'; document.getElementById('app').style.display='block'; loadData(); }
+  function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+  async function loadData() {
+    const customers = await api('customers?select=*,stamps(*)&order=created_at.desc');
+    renderCustomers(customers); updateStats(customers);
+  }
+  function updateStats(customers) {
+    let ts=0,tr=0;
+    customers.forEach(c=>{ if(c.stamps&&c.stamps[0]){ts+=c.stamps[0].count||0;tr+=c.stamps[0].redeemed||0;} });
+    document.getElementById('stat-total').textContent=customers.length;
+    document.getElementById('stat-stamps').textContent=ts;
+    document.getElementById('stat-redeemed').textContent=tr;
+  }
+  function renderCustomers(customers) {
+    const el=document.getElementById('customer-list');
+    if(!customers.length){el.innerHTML='<div class="empty">Belum ada customer.</div>';return;}
+    el.innerHTML=customers.map(c=>{
+      const s=c.stamps&&c.stamps[0]?c.stamps[0]:{count:0,redeemed:0};
+      const count=s.count||0, redeemed=s.redeemed||0, canRedeem=count>=10;
+      const link=`${BASE_URL}/card?id=${c.id}`;
+      let stampsHtml='';
+      for(let i=0;i<10;i++) stampsHtml+=`<div class="stamp ${i<count?'filled':''}">${i<count?'✓':''}</div>`;
+      return `<div class="customer-card">
+        <div class="customer-top">
+          <div class="customer-info"><h3>${c.name}</h3><p>${c.phone}</p></div>
+          <div class="customer-actions">
+            ${canRedeem?'<span class="free-badge">🎉 Gratis!</span>':''}
+            ${canRedeem?`<button class="redeem-btn" onclick="redeem('${c.id}',${redeemed})">Gunakan Gratis</button>`:''}
+            <button class="btn-small" onclick="addStamp('${c.id}',${count})">+ Stempel</button>
+            <button class="btn-outline btn-small" onclick="deleteCustomer('${c.id}','${c.name}')">Hapus</button>
+          </div>
+        </div>
+        <div class="stamp-row"><div class="stamps">${stampsHtml}</div><div class="stamp-count">${count}/10</div></div>
+        <div class="card-link"><a href="${link}" target="_blank">${link}</a><button class="copy-btn" onclick="copyLink('${link}')">Salin</button></div>
+      </div>`;
+    }).join('');
+  }
+  async function addCustomer() {
+    const name=document.getElementById('new-name').value.trim(), phone=document.getElementById('new-phone').value.trim();
+    const errEl=document.getElementById('add-error'); errEl.textContent='';
+    if(!name||!phone){errEl.textContent='Nama dan nomor HP wajib diisi';return;}
+    const result=await api('customers','POST',{name,phone});
+    if(result[0]&&result[0].id){
+      await api('stamps','POST',{customer_id:result[0].id,count:0,redeemed:0});
+      document.getElementById('new-name').value=''; document.getElementById('new-phone').value='';
+      showToast('Customer berhasil ditambahkan!'); loadData();
+    } else { errEl.textContent=result.message||'Gagal menambahkan'; }
+  }
+  async function addStamp(id,count) {
+    if(count>=10){showToast('Sudah 10! Gunakan gratis dulu.');return;}
+    await api(`stamps?customer_id=eq.${id}`,'PATCH',{count:count+1,updated_at:new Date().toISOString()});
+    showToast('Stempel ditambahkan! ✓'); loadData();
+  }
+  async function redeem(id,redeemed) {
+    if(!confirm('Gunakan 1x gratis cuci?'))return;
+    await api(`stamps?customer_id=eq.${id}`,'PATCH',{count:0,redeemed:redeemed+1,updated_at:new Date().toISOString()});
+    showToast('Gratis digunakan! Stempel direset.'); loadData();
+  }
+  async function deleteCustomer(id,name) {
+    if(!confirm(`Hapus "${name}"?`))return;
+    await api(`stamps?customer_id=eq.${id}`,'DELETE');
+    await api(`customers?id=eq.${id}`,'DELETE');
+    showToast('Customer dihapus.'); loadData();
+  }
+  function copyLink(link){navigator.clipboard.writeText(link);showToast('Link disalin! ✓');}
+</script>
+</body>
+</html>
