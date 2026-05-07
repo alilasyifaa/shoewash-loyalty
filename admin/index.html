@@ -165,7 +165,8 @@
       '<div class="customer-actions">'+
         (canRedeem?'<span class="free-badge">🎉 Gratis!</span>':'')+
         (canRedeem?'<button class="redeem-btn" onclick="redeem(\''+c.id+'\')">Gunakan Gratis</button>':'')+
-        '<button class="btn-small" onclick="addStamp(\''+c.id+'\')">+ Stempel</button>'+
+       '<button class="btn-small" onclick="addStamp(\''+c.id+'\')">+ Stempel</button>'+
+        '<button class="btn-outline btn-small" onclick="removeStamp(\''+c.id+'\')" style="color:#e74c3c;border-color:#e74c3c;">− Stempel</button>'+
         '<button class="btn-outline btn-small" onclick="deleteCustomer(\''+c.id+'\')">Hapus</button>'+
       '</div>'+
     '</div>'+
@@ -228,29 +229,44 @@
     const count=c.stamps[0].count||0;
     if(count>=10){showToast('Sudah 10! Gunakan gratis dulu.');return;}
     const newCount=count+1;
-
-    // Update state
     c.stamps[0].count=newCount;
-
-    // Update stamps UI instantly with pop animation
     const stampsEl=document.getElementById('stamps-'+id);
     if(stampsEl){
       const stampEl=stampsEl.children[count];
-      if(stampEl){ stampEl.classList.add('filled','pop'); stampEl.textContent='✓'; setTimeout(()=>stampEl.classList.remove('pop'),300); }
+      if(stampEl){stampEl.classList.add('filled','pop');stampEl.textContent='✓';setTimeout(()=>stampEl.classList.remove('pop'),300);}
     }
     const countEl=document.getElementById('count-'+id);
     if(countEl) countEl.textContent=newCount+'/10';
     updateStats();
-
     if(newCount>=10){
       showToast('Selamat! Customer sudah 10 stempel 🎉');
-      // Re-render card to show redeem button
       const cardEl=document.getElementById('ccard-'+id);
-      if(cardEl){ cardEl.innerHTML=buildCard(c); }
+      if(cardEl){cardEl.innerHTML=buildCard(c);}
     } else {
       showToast('Stempel ditambahkan! ✓');
     }
+    await api('stamps?customer_id=eq.'+id,'PATCH',{count:newCount,updated_at:new Date().toISOString()});
+  }
 
+  async function removeStamp(id){
+    const c=customers.find(x=>x.id===id);if(!c)return;
+    if(!c.stamps||!c.stamps[0])c.stamps=[{count:0,redeemed:0}];
+    const count=c.stamps[0].count||0;
+    if(count<=0){showToast('Stempel sudah 0, tidak bisa dikurangi.');return;}
+    if(!confirm('Kurangi 1 stempel untuk "'+c.name+'"?'))return;
+    const newCount=count-1;
+    c.stamps[0].count=newCount;
+    const stampsEl=document.getElementById('stamps-'+id);
+    if(stampsEl){
+      const stampEl=stampsEl.children[count-1];
+      if(stampEl){stampEl.classList.remove('filled');stampEl.textContent='';}
+    }
+    const countEl=document.getElementById('count-'+id);
+    if(countEl) countEl.textContent=newCount+'/10';
+    const cardEl=document.getElementById('ccard-'+id);
+    if(cardEl){cardEl.innerHTML=buildCard(c);}
+    updateStats();
+    showToast('Stempel dikurangi.');
     await api('stamps?customer_id=eq.'+id,'PATCH',{count:newCount,updated_at:new Date().toISOString()});
   }
 
